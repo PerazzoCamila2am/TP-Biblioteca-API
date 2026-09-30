@@ -1,22 +1,34 @@
+using Biblioteca.Application.Commands;
+using Biblioteca.Infrastructure;
+using Biblioteca.Infrastructure.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services.AddMediatR(config =>
+{
+    config.RegisterServicesFromAssembly(
+        typeof(CrearLibroCommand).Assembly);
+});
+
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    app.MapOpenApi();
+    var dbContext =
+        scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    dbContext.Database.EnsureCreated();
 }
 
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.MapControllers();
 
